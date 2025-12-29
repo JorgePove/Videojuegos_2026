@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videojuegos 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-overlay: rgba(13, 13, 13, 0.85);
+            --panel-color: rgba(26, 26, 26, 0.9);
+            --accent-color: #00ffcc;
+            --text-main: #ffffff;
+            --star-color: #ffcc00;
+        }
+
+        body {
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #0d0d0d; /* Fallback */
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 1150px;
+        }
+
+        /* Capa de filtro para el fondo */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(1px) brightness(0.9);
+            z-index: -1;
+        }
+
+        .title-container {
+            border: 4px double #fff;
+            padding: 20px 40px;
+            margin-bottom: 40px;
+            position: relative;
+            box-shadow: 0 0 15px var(--accent-color), inset 0 0 15px var(--accent-color);
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .title-container::before, .title-container::after {
+            content: "🕹️";
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+        }
+        .title-container::before { left: 10px; }
+        .title-container::after { right: 10px; }
+
+        header h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2rem;
+            text-align: center;
+            margin: 0;
+            animation: neonRGB 6s infinite linear;
+        }
+
+        @keyframes neonRGB {
+            0% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+            33% { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+            66% { color: #ffff00; text-shadow: 0 0 10px #ffff00; }
+            100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            width: 100%;
+            max-width: 1300px;
+            justify-content: space-between;
+        }
+
+        .column {
+            background: var(--panel-color);
+            border: 2px solid rgba(255,255,255,0.1);
+            padding: 15px;
+            flex: 1;
+            min-height: 600px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .column h2 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--accent-color);
+            margin-top: 0;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #444;
+            text-transform: uppercase; /* Forzado a mayúsculas */
+        }
+
+        .add-task {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        input, select, button.add-btn {
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border: 1px solid #555;
+            padding: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            border-radius: 4px;
+        }
+
+        button.add-btn {
+            cursor: pointer;
+            background: #222;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.6rem;
+            margin-top: 5px;
+            transition: 0.3s;
+        }
+
+        button.add-btn:hover { background: var(--accent-color); color: #000; }
+
+        .game-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .game-item {
+            background: rgba(40, 40, 40, 0.8);
+            border-left: 4px solid var(--accent-color);
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .game-info {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            font-family: 'Inter', sans-serif; /* Fuente más clara */
+        }
+
+        .game-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .game-meta {
+            font-size: 0.8rem;
+            color: #aaa;
+            letter-spacing: 0.5px;
+        }
+
+        /* Sistema de Estrellas */
+        .stars-container {
+            display: inline-block;
+            font-size: 1.2rem;
+            margin-top: 5px;
+            cursor: pointer;
+            color: #444;
+        }
+        .star { position: relative; display: inline-block; }
+        .star.filled { color: var(--star-color); text-shadow: 0 0 5px var(--star-color); }
+        .star.half::after {
+            content: '★';
+            position: absolute;
+            left: 0;
+            width: 50%;
+            overflow: hidden;
+            color: var(--star-color);
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .move-btn {
+            background: none;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .delete-btn {
+            color: #ff4444;
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title-container">
+        <header>
+            <h1>VIDEOJUEGOS 2026</h1>
+        </header>
+    </div>
+
+    <div class="container">
+        <div class="column" id="col-todo">
+            <h2>POR JUGAR</h2>
+            <div class="add-task">
+                <input type="text" id="input-todo" placeholder="Nombre..." onkeypress="handleKeyPress(event, 'todo')">
+                <select id="platform-todo"></select>
+                <select id="year-todo"></select>
+                <button class="add-btn" onclick="addGame('todo')">AÑADIR</button>
+            </div>
+            <ul class="game-list" id="list-todo"></ul>
+        </div>
+
+        <div class="column" id="col-playing">
+            <h2>JUGANDO</h2>
+            <div class="add-task">
+                <input type="text" id="input-playing" placeholder="Nombre..." onkeypress="handleKeyPress(event, 'playing')">
+                <select id="platform-playing"></select>
+                <select id="year-playing"></select>
+                <button class="add-btn" onclick="addGame('playing')">AÑADIR</button>
+            </div>
+            <ul class="game-list" id="list-playing"></ul>
+        </div>
+
+        <div class="column" id="col-completed">
+            <h2>COMPLETADOS</h2>
+            <div class="add-task">
+                <input type="text" id="input-completed" placeholder="Nombre..." onkeypress="handleKeyPress(event, 'completed')">
+                <select id="platform-completed"></select>
+                <select id="year-completed"></select>
+                <button class="add-btn" onclick="addGame('completed')">AÑADIR</button>
+            </div>
+            <ul class="game-list" id="list-completed"></ul>
+        </div>
+    </div>
+
+    <script>
+        const platforms = ["PC", "Switch", "PS5"];
+        const years = Array.from({length: 2026 - 1980 + 1}, (_, i) => 2026 - i);
+
+        function setupSelectors() {
+            ['todo', 'playing', 'completed'].forEach(col => {
+                const pSelect = document.getElementById(`platform-${col}`);
+                const ySelect = document.getElementById(`year-${col}`);
+                platforms.forEach(p => pSelect.add(new Option(p, p)));
+                years.forEach(y => ySelect.add(new Option(y, y)));
+            });
+        }
+
+        function handleKeyPress(e, col) { if (e.key === "Enter") addGame(col); }
+
+        function addGame(colId, data = null) {
+            const name = data ? data.name : document.getElementById(`input-${colId}`).value.trim();
+            const platform = data ? data.platform : document.getElementById(`platform-${colId}`).value;
+            const year = data ? data.year : document.getElementById(`year-${colId}`).value;
+            const rating = data ? data.rating : 0;
+
+            if (!name) return;
+
+            const list = document.getElementById(`list-${colId}`);
+            const li = document.createElement("li");
+            li.className = "game-item";
+            
+            let moveBtn = "";
+            if (colId === 'todo') moveBtn = `<button class="move-btn" onclick="moveGame(this, 'playing')">→</button>`;
+            else if (colId === 'playing') moveBtn = `<button class="move-btn" onclick="moveGame(this, 'completed')">→</button>`;
+
+            // Renderizar estrellas solo en Completados
+            let starsHtml = "";
+            if (colId === 'completed') {
+                starsHtml = `<div class="stars-container" onclick="handleStarClick(event, this)">
+                    ${renderStars(rating)}
+                </div>`;
+            }
+
+            li.innerHTML = `
+                <div class="game-info">
+                    <span class="game-title">${name.toUpperCase()}</span>
+                    <span class="game-meta">${platform} • ${year}</span>
+                    ${starsHtml}
+                </div>
+                <div class="actions">
+                    ${moveBtn}
+                    <button class="delete-btn" onclick="removeGame(this)">×</button>
+                </div>
+            `;
+
+            list.appendChild(li);
+            if (!data) {
+                document.getElementById(`input-${colId}`).value = "";
+                saveData();
+            }
+        }
+
+        function renderStars(rating) {
+            let html = "";
+            for (let i = 1; i <= 5; i++) {
+                let classList = "star";
+                if (rating >= i) classList += " filled";
+                else if (rating >= i - 0.5) classList += " half";
+                html += `<span class="${classList}" data-value="${i}">★</span>`;
+            }
+            return html;
+        }
+
+        function handleStarClick(e, container) {
+            const rect = e.target.getBoundingClientRect();
+            const starValue = parseInt(e.target.dataset.value);
+            if (!starValue) return;
+
+            const x = e.clientX - rect.left;
+            const isHalf = x < rect.width / 2;
+            const finalRating = isHalf ? starValue - 0.5 : starValue;
+
+            container.innerHTML = renderStars(finalRating);
+            saveData();
+        }
+
+        function removeGame(btn) {
+            btn.closest('.game-item').remove();
+            saveData();
+        }
+
+        function moveGame(btn, nextColId) {
+            const item = btn.closest('.game-item');
+            const name = item.querySelector('.game-title').innerText;
+            const meta = item.querySelector('.game-meta').innerText.split(' • ');
+            addGame(nextColId, { name, platform: meta[0], year: meta[1] });
+            item.remove();
+            saveData();
+        }
+
+        function saveData() {
+            const gameData = {
+                todo: getListData('list-todo'),
+                playing: getListData('list-playing'),
+                completed: getListData('list-completed')
+            };
+            localStorage.setItem('videojuegos2026_data', JSON.stringify(gameData));
+        }
+
+        function getListData(listId) {
+            return Array.from(document.getElementById(listId).children).map(li => {
+                const stars = li.querySelector('.stars-container');
+                let rating = 0;
+                if (stars) {
+                    const filled = stars.querySelectorAll('.star.filled').length;
+                    const half = stars.querySelectorAll('.star.half').length;
+                    rating = filled + (half * 0.5);
+                }
+                return {
+                    name: li.querySelector('.game-title').innerText,
+                    platform: li.querySelector('.game-meta').innerText.split(' • ')[0],
+                    year: li.querySelector('.game-meta').innerText.split(' • ')[1],
+                    rating: rating
+                };
+            });
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('videojuegos2026_data');
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.keys(data).forEach(colId => {
+                    data[colId].forEach(game => addGame(colId, game));
+                });
+            }
+        }
+
+        setupSelectors();
+        loadData();
+    </script>
+</body>
+</html>
