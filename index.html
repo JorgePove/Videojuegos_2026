@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tracker personal de videojuegos – controla tus juegos por año.">
+    <title>Videojuegos Tracker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ═══════════════════════════════════════════════════════════════
+           VARIABLES Y RESET
+        ═══════════════════════════════════════════════════════════════ */
+        :root {
+            --bg-overlay:    rgba(0, 0, 0, 0.75);
+            --panel-color:   rgba(20, 20, 20, 0.92);
+            --accent-color:  #00ffcc;
+            --text-main:     #ffffff;
+            --star-color:    #ffcc00;
+            --danger-color:  #ff4444;
+            --pc-color:      #4dabf7;
+            --switch-color:  #ff6b6b;
+            --ps5-color:     #a5b4fc;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: clamp(12px, 2vw, 24px);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle, transparent 20%, var(--bg-overlay) 80%), var(--bg-overlay);
+            backdrop-filter: blur(8px);
+            z-index: -1;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           CABECERA
+        ═══════════════════════════════════════════════════════════════ */
+        .title-container {
+            border: 4px double #fff;
+            padding: clamp(12px, 1.5vw, 20px) clamp(20px, 4vw, 48px);
+            margin-bottom: clamp(14px, 2vw, 22px);
+            box-shadow: 0 0 15px var(--accent-color), inset 0 0 15px var(--accent-color);
+            background: rgba(0, 0, 0, 0.9);
+            text-align: center;
+        }
+
+        header h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.9rem, 2.2vw, 2rem);
+            margin: 0;
+            animation: neonRGB 6s infinite linear;
+        }
+
+        @keyframes neonRGB {
+            0%   { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+            33%  { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+            66%  { color: #ffff00; text-shadow: 0 0 10px #ffff00; }
+            100% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           PESTAÑAS DE AÑO (#22)
+        ═══════════════════════════════════════════════════════════════ */
+        .tabs-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            margin-bottom: clamp(8px, 1.2vw, 14px);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.42rem, 0.65vw, 0.56rem);
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid #444;
+            border-bottom: none;
+            color: #777;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s, border-color 0.18s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: #ccc; border-color: #888; }
+
+        .tab-btn.active {
+            background: var(--panel-color);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .tab-btn .tab-close {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 1rem;
+            line-height: 1;
+            vertical-align: middle;
+            color: #555;
+            transition: color 0.15s;
+        }
+
+        .tab-btn:hover .tab-close { color: var(--danger-color); }
+
+        .tab-add-btn {
+            width: 30px;
+            height: 30px;
+            background: rgba(0,255,204,0.07);
+            border: 1px dashed var(--accent-color);
+            color: var(--accent-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.18s;
+            flex-shrink: 0;
+            margin-bottom: 1px;
+        }
+
+        .tab-add-btn:hover { background: rgba(0,255,204,0.18); }
+
+        /* ═══════════════════════════════════════════════════════════════
+           ESTADÍSTICAS
+        ═══════════════════════════════════════════════════════════════ */
+        .stats-bar {
+            display: flex;
+            gap: clamp(6px, 1.2vw, 14px);
+            margin-bottom: clamp(8px, 1.2vw, 16px);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat-pill {
+            background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(0,255,204,0.3);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.38rem, 0.6vw, 0.52rem);
+            color: var(--accent-color);
+            white-space: nowrap;
+        }
+
+        .stat-pill span { color: #fff; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           TOOLBAR: FILTROS + VISTA + ORDENACIÓN (#9, #10, #11)
+        ═══════════════════════════════════════════════════════════════ */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: clamp(6px, 1vw, 14px);
+            margin-bottom: clamp(10px, 1.5vw, 18px);
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1600px;
+        }
+
+        .filter-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+
+        .chip {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.36rem, 0.52vw, 0.46rem);
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid #555;
+            background: rgba(0,0,0,0.5);
+            color: #888;
+            cursor: pointer;
+            transition: all 0.18s;
+            white-space: nowrap;
+        }
+
+        .chip:hover { border-color: #aaa; color: #fff; }
+        .chip.active-all  { border-color: var(--accent-color); color: var(--accent-color); background: rgba(0,255,204,0.08); }
+        .chip.active-pc   { border-color: var(--pc-color);     color: var(--pc-color);     background: rgba(77,171,247,0.1); }
+        .chip.active-sw   { border-color: var(--switch-color); color: var(--switch-color); background: rgba(255,107,107,0.1); }
+        .chip.active-ps5  { border-color: var(--ps5-color);    color: var(--ps5-color);    background: rgba(165,180,252,0.1); }
+
+        .toolbar-sep { width: 1px; height: 22px; background: rgba(255,255,255,0.12); }
+
+        .sort-select {
+            background: rgba(0,0,0,0.6);
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.7rem, 0.8vw, 0.8rem);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .sort-select:focus { outline: none; border-color: var(--accent-color); }
+
+        .view-toggle { display: flex; gap: 4px; }
+
+        .view-btn {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #555;
+            color: #777;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.18s;
+            line-height: 1;
+        }
+
+        .view-btn.active {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background: rgba(0,255,204,0.08);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           COLUMNAS
+        ═══════════════════════════════════════════════════════════════ */
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: clamp(10px, 1.5vw, 20px);
+            width: 100%;
+            max-width: 1600px;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .column {
+            background: var(--panel-color);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: clamp(10px, 1.2vw, 18px);
+            flex: 1;
+            min-height: 580px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            min-width: 0;
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 14px;
+        }
+
+        .column h2 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.46rem, 0.8vw, 0.76rem);
+            color: var(--accent-color);
+            margin: 0;
+        }
+
+        .col-count {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.52rem;
+            background: rgba(0,255,204,0.12);
+            color: var(--accent-color);
+            border-radius: 12px;
+            padding: 3px 9px;
+            min-width: 26px;
+            text-align: center;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           FORMULARIO
+        ═══════════════════════════════════════════════════════════════ */
+        .add-task {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin-bottom: 16px;
+        }
+
+        .input-search-wrap { position: relative; }
+
+        input[type="text"], select {
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: 1px solid #444;
+            padding: 9px 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: clamp(0.74rem, 0.86vw, 0.86rem);
+            border-radius: 6px;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .suggestions {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0; right: 0;
+            background: #1a1a1a;
+            border: 1px solid var(--accent-color);
+            z-index: 500;
+            max-height: 260px;
+            overflow-y: auto;
+            display: none;
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+        }
+
+        .suggestion-item {
+            padding: 8px 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover { background: var(--accent-color); color: #000; }
+
+        .suggestion-item img {
+            width: 30px; height: 40px;
+            object-fit: cover;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .suggestion-no-img {
+            width: 30px; height: 40px;
+            background: #2a2a2a;
+            border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .sugg-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+        .sugg-name { font-size: clamp(0.7rem, 0.8vw, 0.82rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sugg-meta { font-size: 0.67rem; color: #999; display: flex; gap: 8px; flex-wrap: wrap; }
+        .sugg-score { color: #ffcc00; }
+        .sugg-genre { color: #aaa; }
+        .suggestion-item:hover .sugg-meta,
+        .suggestion-item:hover .sugg-score,
+        .suggestion-item:hover .sugg-genre { color: #333; }
+
+        .sugg-error { padding: 12px; text-align: center; color: #ff8888; font-size: 0.82rem; }
+
+        button.add-btn {
+            cursor: pointer;
+            background: #222;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            font-family: 'Press Start 2P', cursive;
+            font-size: clamp(0.4rem, 0.52vw, 0.5rem);
+            padding: 10px;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        button.add-btn:hover { background: var(--accent-color); color: #000; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           TARJETA DE JUEGO — VISTA LISTA
+        ═══════════════════════════════════════════════════════════════ */
+        .game-list {
+            list-style: none;
+            padding: 0; margin: 0;
+            min-height: 60px;
+        }
+
+        .game-item {
+            background: rgba(45, 45, 45, 0.85);
+            border-left: 4px solid var(--accent-color);
+            padding: clamp(7px, 0.9vw, 11px);
+            margin-bottom: 9px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border-radius: 0 8px 8px 0;
+            cursor: default;
+            animation: slideIn 0.28s ease;
+            overflow: hidden;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-16px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .game-item.leaving {
+            animation: slideOut 0.26s ease forwards;
+        }
+
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateX(0); max-height: 120px; margin-bottom: 9px; }
+            to   { opacity: 0; transform: translateX(20px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-bottom: 0; }
+        }
+
+        .game-item.dragging {
+            opacity: 0.4;
+            transform: scale(0.96);
+            background: #444;
+        }
+
+        /* Colores de borde por plataforma (#15) */
+        .game-item.plat-pc     { border-left-color: var(--pc-color); }
+        .game-item.plat-switch { border-left-color: var(--switch-color); }
+        .game-item.plat-ps5    { border-left-color: var(--ps5-color); }
+
+        .drag-handle {
+            cursor: grab;
+            color: #555;
+            font-size: 1.2rem;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .drag-handle:active { cursor: grabbing; }
+
+        .game-cover {
+            width: clamp(34px, 3vw, 48px);
+            height: clamp(45px, 3.9vw, 63px);
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+            flex-shrink: 0;
+        }
+
+        .cover-placeholder {
+            width: clamp(34px, 3vw, 48px);
+            height: clamp(45px, 3.9vw, 63px);
+            background: #1e1e1e;
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            border: 1px solid #2e2e2e;
+        }
+
+        .game-info { flex-grow: 1; min-width: 0; }
+
+        .game-title {
+            font-size: clamp(0.7rem, 0.88vw, 0.9rem);
+            font-weight: 700;
+            color: #fff;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .game-meta {
+            font-size: clamp(0.6rem, 0.7vw, 0.7rem);
+            color: #999;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Géneros (#7) */
+        .game-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 4px;
+        }
+
+        .game-tag {
+            font-size: 0.6rem;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            color: #999;
+            border: 1px solid rgba(255,255,255,0.09);
+        }
+
+        /* Datos extra: fechas (#3) y playtime (#4) */
+        .game-extra {
+            font-size: 0.63rem;
+            color: #777;
+            display: flex;
+            gap: 8px;
+            margin-top: 3px;
+            flex-wrap: wrap;
+        }
+
+        .rawg-time  { color: #5c9cf5; }
+        .date-range { color: #888; }
+
+        /* Estrellas */
+        .stars-container {
+            font-size: clamp(0.88rem, 1vw, 1.08rem);
+            margin-top: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            gap: 1px;
+        }
+
+        .star { display: inline-block; position: relative; color: #3a3a3a; transition: transform 0.1s; }
+        .star:hover { transform: scale(1.2); }
+        .star.filled { color: var(--star-color); }
+        .star.half   { color: #3a3a3a; }
+        .star.half::after {
+            content: '★';
+            position: absolute;
+            left: 0; top: 0;
+            width: 50%;
+            overflow: hidden;
+            color: var(--star-color);
+            pointer-events: none;
+        }
+
+        .actions { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+
+        .move-btn {
+            background: none;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .move-btn:hover { background: var(--accent-color); color: #000; }
+
+        .delete-btn {
+            color: var(--danger-color);
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background 0.15s;
+        }
+
+        .delete-btn:hover { background: rgba(255,68,68,0.15); }
+
+        /* ═══════════════════════════════════════════════════════════════
+           VISTA CUADRÍCULA (#11)
+        ═══════════════════════════════════════════════════════════════ */
+        .view-grid .game-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(clamp(78px, 7.5vw, 105px), 1fr));
+            gap: 8px;
+        }
+
+        .view-grid .game-item {
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 5px;
+            border-left: none;
+            border-top: 3px solid var(--accent-color);
+            border-radius: 8px;
+            text-align: center;
+            gap: 5px;
+            margin-bottom: 0;
+        }
+
+        .view-grid .game-item.plat-pc     { border-top-color: var(--pc-color); }
+        .view-grid .game-item.plat-switch  { border-top-color: var(--switch-color); }
+        .view-grid .game-item.plat-ps5    { border-top-color: var(--ps5-color); }
+
+        .view-grid .game-cover,
+        .view-grid .cover-placeholder {
+            width: clamp(58px, 6.5vw, 88px);
+            height: clamp(76px, 8.5vw, 115px);
+        }
+
+        .view-grid .game-title {
+            font-size: clamp(0.57rem, 0.67vw, 0.68rem);
+            white-space: normal;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .view-grid .game-meta,
+        .view-grid .game-extra,
+        .view-grid .game-tags { display: none; }
+
+        .view-grid .drag-handle { display: none; }
+
+        .view-grid .actions { justify-content: center; }
+
+        .view-grid .stars-container { font-size: 0.72rem; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           TOAST
+        ═══════════════════════════════════════════════════════════════ */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(90px);
+            background: #181818;
+            border: 1px solid var(--danger-color);
+            border-radius: 10px;
+            padding: 12px 18px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+            min-width: 280px;
+        }
+
+        .toast.visible { transform: translateX(-50%) translateY(0); }
+
+        .toast-text { font-size: 0.82rem; color: #fff; flex-grow: 1; }
+
+        .toast-undo {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.4rem;
+            color: var(--accent-color);
+            background: none;
+            border: 1px solid var(--accent-color);
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 5px 8px;
+        }
+
+        .toast-undo:hover { background: var(--accent-color); color: #000; }
+
+        .toast-close {
+            color: #888; background: none; border: none;
+            cursor: pointer; font-size: 1.1rem; line-height: 1;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           MODAL NUEVO AÑO
+        ═══════════════════════════════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.72);
+            z-index: 800;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+        .modal {
+            background: #111;
+            border: 1px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 28px 32px;
+            min-width: 280px;
+            box-shadow: 0 0 40px rgba(0,255,204,0.18);
+            transform: scale(0.94);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.open .modal { transform: scale(1); }
+
+        .modal h3 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.68rem;
+            color: var(--accent-color);
+            margin: 0 0 20px;
+            text-align: center;
+        }
+
+        .modal input[type="number"] {
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: 1px solid #555;
+            padding: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .modal input[type="number"]:focus { outline: none; border-color: var(--accent-color); }
+
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; }
+
+        .modal-ok, .modal-cancel {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.46rem;
+            padding: 9px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+        }
+
+        .modal-ok    { background: var(--accent-color); color: #000; border: none; }
+        .modal-ok:hover { background: #00ccaa; }
+        .modal-cancel { background: none; border: 1px solid #555; color: #888; }
+        .modal-cancel:hover { border-color: #aaa; color: #ccc; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SCROLLBAR
+        ═══════════════════════════════════════════════════════════════ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+    </style>
+</head>
+<body>
+
+    <div class="title-container">
+        <header><h1>VIDEOJUEGOS TRACKER</h1></header>
+    </div>
+
+    <!-- PESTAÑAS DE AÑO -->
+    <div class="tabs-wrapper" id="tabs-wrapper">
+        <button class="tab-add-btn" id="tab-add-btn" title="Añadir nuevo año">+</button>
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div class="stats-bar">
+        <div class="stat-pill">PENDIENTES <span id="stat-todo">0</span></div>
+        <div class="stat-pill">JUGANDO <span id="stat-playing">0</span></div>
+        <div class="stat-pill">COMPLETADOS <span id="stat-completed">0</span></div>
+        <div class="stat-pill">MEDIA ★ <span id="stat-avg">–</span></div>
+        <div class="stat-pill">MEJOR ★ <span id="stat-best">–</span></div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <div class="filter-chips" id="filter-chips">
+            <button class="chip active-all" data-filter="all">TODOS</button>
+            <button class="chip" data-filter="PC">PC</button>
+            <button class="chip" data-filter="Switch">SWITCH</button>
+            <button class="chip" data-filter="PS5">PS5</button>
+        </div>
+        <div class="toolbar-sep"></div>
+        <select class="sort-select" id="sort-select" aria-label="Ordenar por">
+            <option value="added">Orden añadido</option>
+            <option value="name">Nombre A–Z</option>
+            <option value="year_desc">Año ↓</option>
+            <option value="year_asc">Año ↑</option>
+            <option value="rating">Valoración ↓</option>
+            <option value="playtime">Tiempo RAWG ↓</option>
+        </select>
+        <div class="toolbar-sep"></div>
+        <div class="view-toggle">
+            <button class="view-btn active" id="btn-view-list" title="Vista lista">☰</button>
+            <button class="view-btn"        id="btn-view-grid" title="Vista galería">⊞</button>
+        </div>
+    </div>
+
+    <!-- COLUMNAS -->
+    <div class="container" id="main-container"></div>
+
+    <!-- TOAST -->
+    <div class="toast" id="delete-toast" role="alert" aria-live="polite">
+        <span class="toast-text" id="toast-text">Juego eliminado</span>
+        <button class="toast-undo" id="toast-undo-btn">DESHACER</button>
+        <button class="toast-close" id="toast-close-btn" aria-label="Cerrar">×</button>
+    </div>
+
+    <!-- MODAL NUEVO AÑO -->
+    <div class="modal-overlay" id="year-modal">
+        <div class="modal">
+            <h3>NUEVO AÑO</h3>
+            <input type="number" id="year-input-modal" min="2020" max="2099" placeholder="2027">
+            <div class="modal-buttons">
+                <button class="modal-cancel" id="modal-cancel-btn">CANCELAR</button>
+                <button class="modal-ok"     id="modal-ok-btn">AÑADIR</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ═══════════════════════════════════════════════════════════════════
+    //  CONFIGURACIÓN
+    // ═══════════════════════════════════════════════════════════════════
+    const API_KEY     = 'a7e92d02270f400b8eb4af98af6ce7b8';
+    const PLATFORMS   = ['PC', 'Switch', 'PS5'];
+    const YEARS_RANGE = Array.from({ length: 2026 - 1980 + 1 }, (_, i) => 2026 - i);
+
+    const COLUMNS = [
+        { id: 'todo',      label: 'POR JUGAR',   nextCol: 'playing',   nextLabel: 'Mover a Jugando' },
+        { id: 'playing',   label: 'JUGANDO',     nextCol: 'completed', nextLabel: 'Mover a Completados' },
+        { id: 'completed', label: 'COMPLETADOS', nextCol: null,        nextLabel: null }
+    ];
+
+    const PLAT_CLASS = { 'PC': 'plat-pc', 'Switch': 'plat-switch', 'PS5': 'plat-ps5' };
+    const STORAGE_KEY = 'vgtracker_v3';
+    const TABS_KEY    = 'vgtracker_tabs_v3';
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  ESTADO GLOBAL
+    // ═══════════════════════════════════════════════════════════════════
+    let tabs       = [];
+    let allData    = {};   // { "2026": { todo:[], playing:[], completed:[] }, ... }
+    let activeYear = null;
+    let state      = null; // alias → allData[activeYear]
+
+    let idCounter   = 0;
+    let deletedGame = null;
+    let toastTimer  = null;
+
+    let activeFilter = 'all';
+    let activeSort   = 'added';
+    let activeView   = 'list';
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  PERSISTENCIA
+    // ═══════════════════════════════════════════════════════════════════
+    function saveAll() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+            localStorage.setItem(TABS_KEY,    JSON.stringify(tabs));
+        } catch(e) { console.error('[Save]', e); }
+    }
+
+    function loadAll() {
+        try {
+            const d = localStorage.getItem(STORAGE_KEY);
+            const t = localStorage.getItem(TABS_KEY);
+            if (d) { const p = JSON.parse(d); if (p && typeof p === 'object') allData = p; }
+            if (t) { const p = JSON.parse(t); if (Array.isArray(p) && p.length)  tabs   = p; }
+        } catch(e) { console.error('[Load]', e); }
+
+        if (!tabs.length) {
+            tabs = [{ year: 2026 }];
+        }
+
+        // Garantizar estructura para cada tab
+        tabs.forEach(t => {
+            const k = String(t.year);
+            if (!allData[k]) allData[k] = { todo: [], playing: [], completed: [] };
+            COLUMNS.forEach(c => { if (!Array.isArray(allData[k][c.id])) allData[k][c.id] = []; });
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  PESTAÑAS (#22)
+    // ═══════════════════════════════════════════════════════════════════
+    function renderTabs() {
+        const wrapper = document.getElementById('tabs-wrapper');
+        const addBtn  = document.getElementById('tab-add-btn');
+        wrapper.querySelectorAll('.tab-btn').forEach(b => b.remove());
+
+        tabs.forEach(t => {
+            const btn   = document.createElement('button');
+            btn.className = 'tab-btn' + (t.year === activeYear ? ' active' : '');
+            btn.dataset.year = t.year;
+            btn.appendChild(document.createTextNode(String(t.year)));
+
+            if (tabs.length > 1) {
+                const x = document.createElement('span');
+                x.className = 'tab-close';
+                x.textContent = '×';
+                x.title = `Eliminar pestaña ${t.year}`;
+                x.addEventListener('click', e => { e.stopPropagation(); removeTab(t.year); });
+                btn.appendChild(x);
+            }
+
+            btn.addEventListener('click', () => switchTab(t.year));
+            wrapper.insertBefore(btn, addBtn);
+        });
+    }
+
+    function switchTab(year) {
+        activeYear = year;
+        state      = allData[String(year)];
+        idCounter  = getMaxId();
+        renderTabs();
+        buildColumns();
+        reloadCurrentTab();
+        updateCounters();
+        updateStats();
+        document.title = `Videojuegos ${year}`;
+    }
+
+    function getMaxId() {
+        let max = 0;
+        if (!state) return max;
+        COLUMNS.forEach(c => state[c.id].forEach(g => { if ((g.id || 0) > max) max = g.id; }));
+        return max;
+    }
+
+    function addTab(year) {
+        const y = parseInt(year);
+        if (isNaN(y) || y < 2020 || y > 2099) return;
+        if (tabs.find(t => t.year === y)) { switchTab(y); return; }
+        tabs.push({ year: y });
+        tabs.sort((a, b) => a.year - b.year);
+        allData[String(y)] = { todo: [], playing: [], completed: [] };
+        saveAll();
+        switchTab(y);
+    }
+
+    function removeTab(year) {
+        if (tabs.length <= 1) return;
+        if (!confirm(`¿Eliminar la pestaña ${year} y todos sus juegos? Esta acción no se puede deshacer.`)) return;
+        tabs = tabs.filter(t => t.year !== year);
+        delete allData[String(year)];
+        saveAll();
+        switchTab(tabs[tabs.length - 1].year);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  CONSTRUCCIÓN DE COLUMNAS
+    // ═══════════════════════════════════════════════════════════════════
+    function buildColumns() {
+        const container = document.getElementById('main-container');
+        container.innerHTML = '';
+        if (activeView === 'grid') container.classList.add('view-grid');
+        else container.classList.remove('view-grid');
+
+        COLUMNS.forEach(col => {
+            const section = document.createElement('div');
+            section.className = 'column';
+            section.id = `col-${col.id}`;
+
+            // Cabecera
+            const header = document.createElement('div');
+            header.className = 'column-header';
+            const h2 = document.createElement('h2');
+            h2.textContent = col.label;
+            const counter = document.createElement('span');
+            counter.className = 'col-count';
+            counter.id = `count-${col.id}`;
+            counter.textContent = '0';
+            header.appendChild(h2);
+            header.appendChild(counter);
+
+            // Formulario
+            const addTask   = document.createElement('div');
+            addTask.className = 'add-task';
+
+            const searchWrap = document.createElement('div');
+            searchWrap.className = 'input-search-wrap';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id   = `input-${col.id}`;
+            input.placeholder = 'Buscar juego...';
+            input.autocomplete = 'off';
+            input.addEventListener('input',   () => searchGames(col.id));
+            input.addEventListener('keydown', e => { if (e.key === 'Enter') addGame(col.id); });
+
+            const sugg = document.createElement('div');
+            sugg.className = 'suggestions';
+            sugg.id = `sugg-${col.id}`;
+
+            searchWrap.appendChild(input);
+            searchWrap.appendChild(sugg);
+
+            const pSel = document.createElement('select');
+            pSel.id = `platform-${col.id}`;
+            PLATFORMS.forEach(p => pSel.add(new Option(p, p)));
+
+            const ySel = document.createElement('select');
+            ySel.id = `year-${col.id}`;
+            YEARS_RANGE.forEach(y => ySel.add(new Option(y, y)));
+            if ([...ySel.options].some(o => o.value == activeYear)) ySel.value = activeYear;
+
+            const btn = document.createElement('button');
+            btn.className = 'add-btn';
+            btn.textContent = '+ AÑADIR';
+            btn.addEventListener('click', () => addGame(col.id));
+
+            addTask.appendChild(searchWrap);
+            addTask.appendChild(pSel);
+            addTask.appendChild(ySel);
+            addTask.appendChild(btn);
+
+            const ul = document.createElement('ul');
+            ul.className = 'game-list';
+            ul.id = `list-${col.id}`;
+            ul.addEventListener('dragover', e => allowDrop(e, ul));
+
+            section.appendChild(header);
+            section.appendChild(addTask);
+            section.appendChild(ul);
+            container.appendChild(section);
+        });
+
+        // Cerrar sugerencias al clicar fuera
+        document.addEventListener('click', e => {
+            COLUMNS.forEach(col => {
+                const s = document.getElementById(`sugg-${col.id}`);
+                const i = document.getElementById(`input-${col.id}`);
+                if (s && !s.contains(e.target) && e.target !== i) s.style.display = 'none';
+            });
+        });
+    }
+
+    function reloadCurrentTab() {
+        COLUMNS.forEach(col => {
+            const list = document.getElementById(`list-${col.id}`);
+            if (list) list.innerHTML = '';
+        });
+        if (!state) return;
+        COLUMNS.forEach(col => getSortedGames(col.id).forEach(g => renderGameItem(col.id, g)));
+        applyFilter(activeFilter);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  DRAG & DROP
+    // ═══════════════════════════════════════════════════════════════════
+    function allowDrop(e, list) {
+        e.preventDefault();
+        if (activeView === 'grid') return;
+        const dragging = document.querySelector('.dragging');
+        if (!dragging) return;
+        const siblings = [...list.querySelectorAll('.game-item:not(.dragging)')];
+        const next = siblings.find(s => e.clientY <= s.getBoundingClientRect().top + s.getBoundingClientRect().height / 2);
+        list.insertBefore(dragging, next || null);
+    }
+
+    function initDragItem(li) {
+        if (activeView === 'grid') { li.draggable = false; return; }
+        li.draggable = true;
+        li.addEventListener('dragstart', () => li.classList.add('dragging'));
+        li.addEventListener('dragend',   () => {
+            li.classList.remove('dragging');
+            syncStateFromDOM();
+            saveAll();
+        });
+    }
+
+    function syncStateFromDOM() {
+        if (!state) return;
+        COLUMNS.forEach(col => {
+            const list = document.getElementById(`list-${col.id}`);
+            if (!list) return;
+            const ids = [...list.querySelectorAll('.game-item')].map(li => parseInt(li.dataset.id));
+            state[col.id].sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  BÚSQUEDA API (con géneros #7, playtime #4, score)
+    // ═══════════════════════════════════════════════════════════════════
+    let searchTimeout = null;
+
+    async function searchGames(colId) {
+        const input   = document.getElementById(`input-${colId}`);
+        const suggBox = document.getElementById(`sugg-${colId}`);
+        const query   = input.value.trim();
+
+        clearTimeout(searchTimeout);
+        input.dataset.selectedImg    = '';
+        input.dataset.selectedGenres = '';
+        input.dataset.playtime       = '';
+
+        if (query.length < 3) { suggBox.style.display = 'none'; return; }
+
+        searchTimeout = setTimeout(async () => {
+            try {
+                const url = new URL('https://api.rawg.io/api/games');
+                url.searchParams.set('key',       API_KEY);
+                url.searchParams.set('search',    query);
+                url.searchParams.set('page_size', '6');
+
+                const resp = await fetch(url.toString());
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const data = await resp.json();
+
+                suggBox.innerHTML = '';
+
+                if (!data.results?.length) {
+                    const msg = document.createElement('div');
+                    msg.className   = 'sugg-error';
+                    msg.textContent = 'Sin resultados.';
+                    suggBox.appendChild(msg);
+                    suggBox.style.display = 'block';
+                    return;
+                }
+
+                data.results.forEach(game => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+
+                    const imgSrc = game.background_image || '';
+                    if (imgSrc) {
+                        const img = document.createElement('img');
+                        img.addEventListener('error', () => img.replaceWith(createImgFallback()));
+                        img.src = imgSrc;
+                        item.appendChild(img);
+                    } else {
+                        item.appendChild(createImgFallback());
+                    }
+
+                    const infoDiv  = document.createElement('div');
+                    infoDiv.className = 'sugg-info';
+
+                    const year     = game.released ? game.released.split('-')[0] : 'N/A';
+                    const score    = game.metacritic ? `MC ${game.metacritic}` : (game.rating ? `★ ${game.rating.toFixed(1)}` : '');
+                    const genres   = (game.genres || []).slice(0, 2).map(g => g.name).join(' · ');
+                    const playtime = game.playtime  ? `~${game.playtime}h`  : '';
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className   = 'sugg-name';
+                    nameSpan.textContent = `${game.name} (${year})`;
+
+                    const metaSpan = document.createElement('span');
+                    metaSpan.className = 'sugg-meta';
+
+                    if (score)    { const s = document.createElement('span'); s.className = 'sugg-score'; s.textContent = score;    metaSpan.appendChild(s); }
+                    if (genres)   { const g = document.createElement('span'); g.className = 'sugg-genre'; g.textContent = genres;   metaSpan.appendChild(g); }
+                    if (playtime) { const p = document.createElement('span');                              p.textContent = playtime; metaSpan.appendChild(p); }
+
+                    infoDiv.appendChild(nameSpan);
+                    infoDiv.appendChild(metaSpan);
+                    item.appendChild(infoDiv);
+
+                    item.addEventListener('click', () => selectGame(colId, game));
+                    suggBox.appendChild(item);
+                });
+
+                suggBox.style.display = 'block';
+
+            } catch(err) {
+                suggBox.innerHTML = '';
+                const msg = document.createElement('div');
+                msg.className   = 'sugg-error';
+                msg.textContent = 'Error al buscar. Comprueba tu API key o conexión.';
+                suggBox.appendChild(msg);
+                suggBox.style.display = 'block';
+                console.error('[RAWG]', err);
+            }
+        }, 450);
+    }
+
+    function createImgFallback() {
+        const ph = document.createElement('div');
+        ph.className   = 'suggestion-no-img';
+        ph.textContent = '🎮';
+        return ph;
+    }
+
+    function selectGame(colId, game) {
+        const input   = document.getElementById(`input-${colId}`);
+        const suggBox = document.getElementById(`sugg-${colId}`);
+        const year    = game.released ? game.released.split('-')[0] : '';
+
+        input.value = game.name;
+        input.dataset.selectedImg    = game.background_image || '';
+        input.dataset.selectedGenres = (game.genres || []).slice(0, 3).map(g => g.name).join(',');
+        input.dataset.playtime       = game.playtime || '';
+        suggBox.style.display = 'none';
+
+        const ySel = document.getElementById(`year-${colId}`);
+        if (year && [...ySel.options].some(o => o.value == year)) ySel.value = year;
+
+        const pSel  = document.getElementById(`platform-${colId}`);
+        const pNames = (game.platforms || []).map(p => p.platform?.name?.toLowerCase() || '');
+        if      (pNames.some(n => n.includes('pc')))            pSel.value = 'PC';
+        else if (pNames.some(n => n.includes('switch')))        pSel.value = 'Switch';
+        else if (pNames.some(n => n.includes('playstation 5'))) pSel.value = 'PS5';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  AÑADIR JUEGO
+    // ═══════════════════════════════════════════════════════════════════
+    function todayStr() {
+        return new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function addGame(colId, gameData = null) {
+        let entry;
+
+        if (gameData) {
+            entry = { ...gameData };
+            if (!entry.id) entry.id = ++idCounter;
+        } else {
+            const input = document.getElementById(`input-${colId}`);
+            const name  = input.value.trim();
+            if (!name) return;
+
+            entry = {
+                id:        ++idCounter,
+                name,
+                platform:  document.getElementById(`platform-${colId}`).value,
+                year:      document.getElementById(`year-${colId}`).value,
+                img:       input.dataset.selectedImg    || '',
+                genres:    input.dataset.selectedGenres || '',
+                playtime:  input.dataset.playtime       || '',
+                rating:    0,
+                dateAdded: new Date().toISOString(),
+                dateStart: colId === 'playing'   ? todayStr() : '',
+                dateEnd:   colId === 'completed' ? todayStr() : '',
+            };
+
+            input.value = '';
+            input.dataset.selectedImg    = '';
+            input.dataset.selectedGenres = '';
+            input.dataset.playtime       = '';
+            document.getElementById(`sugg-${colId}`).style.display = 'none';
+        }
+
+        // Completar campos opcionales
+        if (!entry.dateAdded) entry.dateAdded = new Date().toISOString();
+        if (entry.genres   === undefined) entry.genres   = '';
+        if (entry.playtime === undefined) entry.playtime = '';
+        if (!entry.dateStart && colId === 'playing')   entry.dateStart = todayStr();
+        if (!entry.dateEnd   && colId === 'completed') entry.dateEnd   = todayStr();
+
+        state[colId].push(entry);
+        renderGameItem(colId, entry);
+        updateCounters();
+        updateStats();
+        if (!gameData) saveAll();
+        applyFilter(activeFilter);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  RENDERIZAR TARJETA
+    // ═══════════════════════════════════════════════════════════════════
+    function renderGameItem(colId, entry) {
+        const list = document.getElementById(`list-${colId}`);
+        if (!list) return;
+
+        const li = document.createElement('li');
+        li.className = 'game-item ' + (PLAT_CLASS[entry.platform] || '');
+        li.dataset.id       = entry.id;
+        li.dataset.platform = entry.platform;
+
+        // Handle
+        const handle = document.createElement('div');
+        handle.className  = 'drag-handle';
+        handle.textContent = '≡';
+        handle.setAttribute('aria-hidden', 'true');
+
+        // Carátula
+        let coverEl;
+        if (entry.img) {
+            coverEl = document.createElement('img');
+            coverEl.className = 'game-cover';
+            coverEl.alt = entry.name;
+            coverEl.addEventListener('error', () => {
+                const ph = document.createElement('div');
+                ph.className = 'cover-placeholder';
+                ph.textContent = '🎮';
+                coverEl.replaceWith(ph);
+            });
+            coverEl.src = entry.img;
+        } else {
+            coverEl = document.createElement('div');
+            coverEl.className  = 'cover-placeholder';
+            coverEl.textContent = '🎮';
+        }
+
+        // Info
+        const info = document.createElement('div');
+        info.className = 'game-info';
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className  = 'game-title';
+        titleSpan.textContent = entry.name.toUpperCase();
+
+        const metaSpan = document.createElement('span');
+        metaSpan.className  = 'game-meta';
+        metaSpan.textContent = `${entry.platform} • ${entry.year}`;
+
+        info.appendChild(titleSpan);
+        info.appendChild(metaSpan);
+
+        // Géneros (#7)
+        if (entry.genres) {
+            const tagsDiv = document.createElement('div');
+            tagsDiv.className = 'game-tags';
+            entry.genres.split(',').filter(Boolean).forEach(g => {
+                const tag = document.createElement('span');
+                tag.className  = 'game-tag';
+                tag.textContent = g.trim();
+                tagsDiv.appendChild(tag);
+            });
+            info.appendChild(tagsDiv);
+        }
+
+        // Playtime (#4) + Fechas (#3)
+        const extraDiv = document.createElement('div');
+        extraDiv.className = 'game-extra';
+
+        if (entry.playtime) {
+            const pt = document.createElement('span');
+            pt.className  = 'rawg-time';
+            pt.textContent = `🕐 ~${entry.playtime}h`;
+            pt.title = 'Tiempo medio según RAWG';
+            extraDiv.appendChild(pt);
+        }
+
+        if (colId === 'playing' && entry.dateStart) {
+            const ds = document.createElement('span');
+            ds.className  = 'date-range';
+            ds.textContent = `📅 Desde ${entry.dateStart}`;
+            extraDiv.appendChild(ds);
+        }
+
+        if (colId === 'completed' && (entry.dateStart || entry.dateEnd)) {
+            const ds = document.createElement('span');
+            ds.className  = 'date-range';
+            const from = entry.dateStart || '?';
+            const to   = entry.dateEnd ? ` → ${entry.dateEnd}` : '';
+            ds.textContent = `📅 ${from}${to}`;
+            extraDiv.appendChild(ds);
+        }
+
+        if (extraDiv.children.length) info.appendChild(extraDiv);
+
+        // Estrellas (solo completados)
+        if (colId === 'completed') {
+            const starsDiv = document.createElement('div');
+            starsDiv.className = 'stars-container';
+            starsDiv.setAttribute('aria-label', `Valoración: ${entry.rating} de 5`);
+            renderStars(starsDiv, entry.rating);
+            starsDiv.addEventListener('click', e => handleStarClick(e, starsDiv, entry));
+            info.appendChild(starsDiv);
+        }
+
+        // Acciones
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const colConfig = COLUMNS.find(c => c.id === colId);
+        if (colConfig?.nextCol) {
+            const moveBtn = document.createElement('button');
+            moveBtn.className = 'move-btn';
+            moveBtn.textContent = '→';
+            moveBtn.title = colConfig.nextLabel;
+            moveBtn.setAttribute('aria-label', colConfig.nextLabel);
+            moveBtn.addEventListener('click', () => moveGameWithAnim(li, colId, colConfig.nextCol, entry));
+            actions.appendChild(moveBtn);
+        }
+
+        const delBtn = document.createElement('button');
+        delBtn.className  = 'delete-btn';
+        delBtn.textContent = '×';
+        delBtn.title = 'Eliminar juego';
+        delBtn.setAttribute('aria-label', `Eliminar ${entry.name}`);
+        delBtn.addEventListener('click', () => confirmDelete(li, colId, entry));
+        actions.appendChild(delBtn);
+
+        li.appendChild(handle);
+        li.appendChild(coverEl);
+        li.appendChild(info);
+        li.appendChild(actions);
+
+        list.appendChild(li);
+        initDragItem(li);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  ESTRELLAS
+    // ═══════════════════════════════════════════════════════════════════
+    function renderStars(container, rating) {
+        container.innerHTML = '';
+        for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('span');
+            star.className   = 'star';
+            star.dataset.value = i;
+            star.textContent = '★';
+            if      (rating >= i)       star.classList.add('filled');
+            else if (rating >= i - 0.5) star.classList.add('half');
+            container.appendChild(star);
+        }
+    }
+
+    function handleStarClick(e, container, entry) {
+        const target = e.target.closest('.star');
+        if (!target) return;
+        const rect   = target.getBoundingClientRect();
+        const val    = parseInt(target.dataset.value);
+        const rating = (e.clientX - rect.left < rect.width / 2) ? val - 0.5 : val;
+        entry.rating = rating;
+        container.setAttribute('aria-label', `Valoración: ${rating} de 5`);
+        renderStars(container, rating);
+        updateStats();
+        saveAll();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  MOVER CON ANIMACIÓN (#16)
+    // ═══════════════════════════════════════════════════════════════════
+    function moveGameWithAnim(li, fromColId, toColId, entry) {
+        li.classList.add('leaving');
+        li.addEventListener('animationend', () => {
+            state[fromColId] = state[fromColId].filter(g => g.id !== entry.id);
+            li.remove();
+            const newEntry = { ...entry };
+            if (toColId === 'playing'   && !newEntry.dateStart) newEntry.dateStart = todayStr();
+            if (toColId === 'completed' && !newEntry.dateEnd)   newEntry.dateEnd   = todayStr();
+            addGame(toColId, newEntry);
+            updateCounters();
+            updateStats();
+            saveAll();
+        }, { once: true });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  BORRAR CON DESHACER
+    // ═══════════════════════════════════════════════════════════════════
+    function confirmDelete(li, colId, entry) {
+        li.classList.add('leaving');
+        li.addEventListener('animationend', () => {
+            state[colId] = state[colId].filter(g => g.id !== entry.id);
+            li.remove();
+            updateCounters();
+            updateStats();
+            saveAll();
+            deletedGame = { colId, entry };
+            showToast(`"${entry.name}" eliminado`);
+        }, { once: true });
+    }
+
+    function showToast(msg) {
+        document.getElementById('toast-text').textContent = msg;
+        document.getElementById('delete-toast').classList.add('visible');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(hideToast, 5500);
+    }
+
+    function hideToast() {
+        document.getElementById('delete-toast').classList.remove('visible');
+        deletedGame = null;
+    }
+
+    document.getElementById('toast-undo-btn').addEventListener('click', () => {
+        if (!deletedGame) return;
+        const { colId, entry } = deletedGame;
+        state[colId].push(entry);
+        renderGameItem(colId, entry);
+        updateCounters(); updateStats(); saveAll(); hideToast();
+    });
+
+    document.getElementById('toast-close-btn').addEventListener('click', hideToast);
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  FILTRO POR PLATAFORMA (#9)
+    // ═══════════════════════════════════════════════════════════════════
+    function applyFilter(filter) {
+        activeFilter = filter;
+
+        document.querySelectorAll('.chip').forEach(c => {
+            c.className = 'chip';
+            if (c.dataset.filter === filter) {
+                if (filter === 'all')    c.classList.add('active-all');
+                if (filter === 'PC')     c.classList.add('active-pc');
+                if (filter === 'Switch') c.classList.add('active-sw');
+                if (filter === 'PS5')    c.classList.add('active-ps5');
+            }
+        });
+
+        document.querySelectorAll('.game-item').forEach(li => {
+            li.style.display = (filter === 'all' || li.dataset.platform === filter) ? '' : 'none';
+        });
+    }
+
+    document.getElementById('filter-chips').addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (chip) applyFilter(chip.dataset.filter);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  ORDENACIÓN (#10)
+    // ═══════════════════════════════════════════════════════════════════
+    function getSortedGames(colId) {
+        const games = [...(state[colId] || [])];
+        switch (activeSort) {
+            case 'name':       return games.sort((a,b) => a.name.localeCompare(b.name));
+            case 'year_desc':  return games.sort((a,b) => b.year - a.year);
+            case 'year_asc':   return games.sort((a,b) => a.year - b.year);
+            case 'rating':     return games.sort((a,b) => (b.rating||0) - (a.rating||0));
+            case 'playtime':   return games.sort((a,b) => (parseInt(b.playtime)||0) - (parseInt(a.playtime)||0));
+            default:           return games;
+        }
+    }
+
+    document.getElementById('sort-select').addEventListener('change', e => {
+        activeSort = e.target.value;
+        reloadCurrentTab();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  VISTA LISTA / CUADRÍCULA (#11)
+    // ═══════════════════════════════════════════════════════════════════
+    document.getElementById('btn-view-list').addEventListener('click', () => setView('list'));
+    document.getElementById('btn-view-grid').addEventListener('click', () => setView('grid'));
+
+    function setView(view) {
+        activeView = view;
+        document.getElementById('btn-view-list').classList.toggle('active', view === 'list');
+        document.getElementById('btn-view-grid').classList.toggle('active', view === 'grid');
+
+        const container = document.getElementById('main-container');
+        container.classList.toggle('view-grid', view === 'grid');
+
+        document.querySelectorAll('.game-item').forEach(li => {
+            const dh = li.querySelector('.drag-handle');
+            if (view === 'grid') {
+                li.draggable = false;
+                if (dh) dh.style.display = 'none';
+            } else {
+                initDragItem(li);
+                if (dh) dh.style.display = '';
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  CONTADORES Y ESTADÍSTICAS
+    // ═══════════════════════════════════════════════════════════════════
+    function updateCounters() {
+        if (!state) return;
+        COLUMNS.forEach(col => {
+            const el = document.getElementById(`count-${col.id}`);
+            if (el) el.textContent = state[col.id].length;
+        });
+        document.getElementById('stat-todo').textContent      = state.todo.length;
+        document.getElementById('stat-playing').textContent   = state.playing.length;
+        document.getElementById('stat-completed').textContent = state.completed.length;
+    }
+
+    function updateStats() {
+        if (!state) return;
+        const rated = state.completed.filter(g => g.rating > 0);
+        if (!rated.length) {
+            document.getElementById('stat-avg').textContent  = '–';
+            document.getElementById('stat-best').textContent = '–';
+        } else {
+            const avg  = rated.reduce((s,g) => s + g.rating, 0) / rated.length;
+            const best = Math.max(...rated.map(g => g.rating));
+            document.getElementById('stat-avg').textContent  = avg.toFixed(1);
+            document.getElementById('stat-best').textContent = best.toFixed(1);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  MODAL NUEVO AÑO
+    // ═══════════════════════════════════════════════════════════════════
+    const yearModal  = document.getElementById('year-modal');
+    const yearInputM = document.getElementById('year-input-modal');
+
+    document.getElementById('tab-add-btn').addEventListener('click', () => {
+        yearInputM.value = activeYear + 1;
+        yearModal.classList.add('open');
+        yearInputM.focus();
+    });
+
+    document.getElementById('modal-ok-btn').addEventListener('click', () => {
+        const y = parseInt(yearInputM.value);
+        yearModal.classList.remove('open');
+        if (y >= 2020 && y <= 2099) addTab(y);
+    });
+
+    document.getElementById('modal-cancel-btn').addEventListener('click', () => yearModal.classList.remove('open'));
+
+    yearInputM.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  document.getElementById('modal-ok-btn').click();
+        if (e.key === 'Escape') yearModal.classList.remove('open');
+    });
+
+    yearModal.addEventListener('click', e => { if (e.target === yearModal) yearModal.classList.remove('open'); });
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  ARRANQUE
+    // ═══════════════════════════════════════════════════════════════════
+    loadAll();
+    activeYear = tabs[tabs.length - 1].year;
+    state      = allData[String(activeYear)];
+    idCounter  = getMaxId();
+
+    renderTabs();
+    buildColumns();
+    reloadCurrentTab();
+    updateCounters();
+    updateStats();
+    document.title = `Videojuegos ${activeYear}`;
+    </script>
+</body>
+</html>
